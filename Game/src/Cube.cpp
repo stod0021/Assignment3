@@ -28,6 +28,7 @@ Cube::Cube(Vector3 position)
 
 void Cube::Initialize(Graphics *graphics)
 {
+	//srand(time(NULL));
 
   r = (float)(rand() % 255);
   g = (float)(rand() % 255);
@@ -36,14 +37,6 @@ void Cube::Initialize(Graphics *graphics)
   vertices = new Vector3[8]();
   colours = new Vector4[8]();
 
-  //SetVertex(0, /*pos*/-0.5f, 0.5f, 0.5f,  /*color*/ random, 0.0f, random, 1.0f);
-  //SetVertex(1, /*pos*/0.5f, 0.5f, 0.5f,   /*color*/ 0.0f, random, random, 1.0f);
-  //SetVertex(2, /*pos*/-0.5f, -0.5f, 0.5f, /*color*/ random, random, 0.0f, 1.0f);
-  //SetVertex(3, /*pos*/0.5f, -0.5f, 0.5f,  /*color*/ random, random, 0.0f, 1.0f);
-  //SetVertex(4, /*pos*/-0.5f, 0.5f, -0.5f, /*color*/ random, random, random, 1.0f);
-  //SetVertex(5, /*pos*/0.5f, 0.5f, -0.5f,  /*color*/ random, 0.0f, random, 1.0f);
-  //SetVertex(6, /*pos*/-0.5f, -0.5f, -0.5f,/*color*/ random, random, random, 1.0f);
-  //SetVertex(7, /*pos*/0.5f, -0.5f, -0.5f, /*color*/ 0.0f, random, random, 1.0f);
   if (_isEnemy == false){
 	  SetVertex(0, /*pos*/-0.5f, 0.5f, 0.5f,  /*color*/ r, 0.0f, b, 1.0f);
 	  SetVertex(1, /*pos*/0.5f, 0.5f, 0.5f,   /*color*/ 0.0f, g, b, 1.0f);
@@ -141,7 +134,7 @@ void Cube::Update(float dt)
 	}
 }
 
-void Cube::Draw(Graphics *graphics, float dt)
+void Cube::Draw(Graphics *graphics, Matrix4x4 relativeTo, float dt)
 { 
   GLenum error = glGetError();
 
@@ -200,4 +193,21 @@ void Cube::SetIsTouched(bool isTouched)
 bool Cube::GetIsTouched()
 {
 	return _isTouched;
+}
+
+void Cube::Reset()
+{
+	//_isTouched = false;
+	//_touchedSet = false;
+
+	//r = ((float)rand() / (RAND_MAX));
+
+	SetVertex(0, /*pos*/-0.5f, 0.5f, 0.5f,  /*color*/ 1.0f, 0, 0, 1.0f);
+	SetVertex(1, /*pos*/0.5f, 0.5f, 0.5f,   /*color*/ 1.0f, 0, 0, 1.0f);
+	SetVertex(2, /*pos*/-0.5f, -0.5f, 0.5f, /*color*/ 1.0f, 0, 0, 1.0f);
+	SetVertex(3, /*pos*/0.5f, -0.5f, 0.5f,  /*color*/ 1.0f, 0, 0, 1.0f);
+	SetVertex(4, /*pos*/-0.5f, 0.5f, -0.5f, /*color*/ 0, 0, 1.0f, 1.0f);
+	SetVertex(5, /*pos*/0.5f, 0.5f, -0.5f,  /*color*/ 0, 0, 1.0f, 1.0f);
+	SetVertex(6, /*pos*/-0.5f, -0.5f, -0.5f,/*color*/ 0, 0, 1.0f, 1.0f);
+	SetVertex(7, /*pos*/0.5f, -0.5f, -0.5f, /*color*/ 0, 0, 1.0f, 1.0f);
 }

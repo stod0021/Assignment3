@@ -1,3 +1,9 @@
+/**
+* \class Cube.h
+* \brief A class that represents the world block objects within the world of QBert.
+* \author David Stoddard
+* \date March 26, 2015
+*/
 #pragma once
 
 #include <GameObject.h>
@@ -13,13 +19,16 @@ public:
 
   void Initialize(Graphics *graphics);
   void Update(float dt);
-  void Draw(Graphics *graphics, float dt);
+  void Draw(Graphics *graphics, Matrix4x4 relativeTo, float dt);
 
   void SetIsEnemy(bool isEnemy);
 
   bool GetIsEnemy();
 
   void SetIsTouched(bool isTouched);
+
+  void Reset();
+
   /**
   * \fn bool Player::GetIsTouched()
   * \brief Checks if cube was touched
@@ -29,8 +38,6 @@ public:
 
   Vector3 GetVertex();
 protected:
-  //void *_vertexPointer;
-
   Vector3 *vertices;
   Vector4 *colours;
 
@@ -40,7 +47,6 @@ protected:
   int offset;
   bool _isEnemy = false;
   bool _isTouched = false;
-  //Vertex *vertices;
   unsigned int* indices;
 
   void SetVertex(int index, float x, float y, float z, float r, float g, float b, float a);

@@ -1,11 +1,11 @@
 #pragma once // Preprocessor directive to ensure that this header will only be included once. -- Generally used on Windows
 
 /**
- * GameEngine.h
- * Purpose: A basic description of the game engine.
- *
- * By: Justin Wilkinson
- */
+* GameEngine.h
+* Purpose: A basic description of the game engine.
+*
+* By: Justin Wilkinson
+*/
 
 #include "MathUtils.h"
 #include "Timer.h"
@@ -22,34 +22,34 @@ class Graphics;
 class GameEngine
 {
 public:
-  /**
-   * Creates a GameEngine instance
-   * @return The new GameEngine instance, NULL if no instance could be created.
-   */
-  static GameEngine* CreateInstance();
+	/**
+	* Creates a GameEngine instance
+	* @return The new GameEngine instance, NULL if no instance could be created.
+	*/
+	static GameEngine* CreateInstance();
 
-  void Initialize();
-  void Shutdown();
+	void Initialize();
+	void Shutdown();
 
-  void Update();
-  void Draw();
+	void Update();
+	void Draw();
 
-  ~GameEngine();
+	~GameEngine();
 
 protected:
-  GameEngine();
+	GameEngine();
 
-  virtual void InitializeImpl(Graphics *graphics) = 0;
-  virtual void UpdateImpl(float dt) = 0;
-  virtual void DrawImpl(Graphics *graphics, float dt) = 0;
+	virtual void InitializeImpl() = 0;
+	virtual void UpdateImpl(float dt) = 0;
+	virtual void DrawImpl(Graphics *graphics, float dt) = 0;
 
-  static GameEngine *_instance;
+	static GameEngine *_instance;
 
-  SDL_Window *_window;
-  Graphics *_graphicsObject;
-  Timer _engineTimer;
+	SDL_Window *_window;
+	Graphics *_graphicsObject;
+	Timer _engineTimer;
 
-  std::vector<GameObject *> _objects;
+	std::vector<GameObject *> _objects;
 
-  float _oldTime, _currentTime, _deltaTime;
+	float _oldTime, _currentTime, _deltaTime;
 };

@@ -1,3 +1,9 @@
+/**
+* \class Player.h
+* \brief A class that represents QBert also known as the player character.
+* \author David Stoddard
+* \date March 26, 2015
+*/
 #pragma once
 
 #include <GameObject.h>
@@ -9,23 +15,20 @@ class Player : public GameObject
 public:
 	Player();
 	Player(Vector3 position);
-
+	/**
+	* \fn void Game::InitializeImpl(Graphics *graphics)
+	* \brief Initialize main game environment and players is drawn to the screen.
+	* \param openGL graphics draws.
+	*/
 	void Initialize(Graphics *graphics);
+	/**
+	* \fn void Game::Update(float dt)
+	* \brief Update game to check for ingame interactions such as player and enemy movement or falling off world.
+	* \param dt keeps count on delta time.
+	*/
 	void Update(float dt);
-	void Draw(Graphics *graphics, float dt);
 
-	///**
-	//* \fn Vector3 Player::SetPosition()
-	//* \brief A function that is used to set the player position.
-	//* \return Vector3 The position fo the player.
-	//*/
-	//void SetPosition(Vector3 pos);
-	///**
-	//* \fn Vector3 Player::GetPosition()
-	//* \brief A function that is used to get the player sposition.
-	//* \return Vector3 The position fo the player.
-	//*/
-	//Vector3 GetPosition();
+	void Draw(Graphics *graphics,Matrix4x4 relativeTo, float dt);
 
 protected:
 	//void *_vertexPointer;

@@ -29,45 +29,46 @@ Game::Game() : GameEngine()
 
 Game::~Game()
 {
+	//free memory
 	delete _camera;
 	_camera = nullptr;
-
-	delete _enemyAI;
-	_enemyAI = nullptr;
 
 	for (unsigned int i = 0; i < _worldSize; i++){
 		delete _worldCubes[i];
 		_worldCubes[i] = nullptr;
 	}
+	free(_worldCubes);
+	_worldCubes = nullptr;
 
-	
+	Mix_FreeChunk(_fallSound);
+	Mix_FreeChunk(_landSound);
+	Mix_FreeChunk(_qbertBeep1Sound);
+	Mix_FreeChunk(_qbertBeep2Sound);
+	Mix_FreeChunk(_deadSound);
+	Mix_FreeChunk(_reallyDeadSound);
+	Mix_FreeChunk(_nextLvlSound);
+
+	//_mixChunk
+	_fallSound = NULL;
+	_landSound = NULL;
+	_qbertBeep1Sound = NULL;
+	_qbertBeep2Sound = NULL;
+	_deadSound = NULL;
+	_reallyDeadSound = NULL;
+	_nextLvlSound = NULL;
 	Mix_CloseAudio();
 	Mix_Quit();
 
-	Mix_FreeChunk(_fall);
-	Mix_FreeChunk(_land);
-	Mix_FreeChunk(_qbertBeep1);
-	Mix_FreeChunk(_qbertBeep2);
-	Mix_FreeChunk(_dead);
-	Mix_FreeChunk(_reallyDead);
-	Mix_FreeChunk(_nextLvl);
-
-	//_mixChunk
-	_fall = NULL;
-	_land = NULL;
-	_qbertBeep1 = NULL;
-	_qbertBeep2 = NULL;
-	_dead = NULL;
-	_reallyDead = NULL;
-	_nextLvl = NULL;
 }
 
-void Game::InitializeImpl(Graphics *graphics)
+void Game::InitializeImpl()
 {
+	win = false;
+
 	 _playerScore = 0;
 	 _playerLife = 3;
 	 _lvl = 1;
-	 sprintf_s(_score, "Player Score %d |QBERT GAME Level-%d| Player Life %d", _playerScore, _lvl, _playerLife);
+	 sprintf_s(_score, "Player Score %d |QBERT GAME Level_%d| Player Life %d", _playerScore, _lvl, _playerLife);
 	SDL_SetWindowTitle(_window, _score);
 	_spawnTimer = 8;
 
@@ -95,34 +96,30 @@ void Game::InitializeImpl(Graphics *graphics)
   _playerPos = Vector3(0, 1, 0);
   _player.GetTransform().position=_playerPos;
 
-  //Spawn Enemy
-  int enemyNumbers= 1 + _lvl;
-  Enemy *_enemyAI;
-  _enemyAI = new Enemy();
-
   ////Spawn Enemy
-  //for (int i = 0; i < enemyNumbers; i++)
-	 // {
-	 // int random = rand() % 2;
-	 // if (random == 0)
-	 // {
-		//  _enemyAI[i].GetTransform().position=(Vector3(1, 0, 0));
-	 // }
-	 // else
-	 // {
-		//  _enemyAI[i].GetTransform().position = (Vector3(1, 0, 0));
-	 // }
+  for (int i = 0; i < 3; i++)
+	  {
+	  int random = rand() % 2;
+	  if (random == 0)
+	  {
+		  _enemyAI[i].GetTransform().position=(Vector3(1, 0, 0));
+	  }
+	  else
+	  {
+		  _enemyAI[i].GetTransform().position = (Vector3(1, 0, 0));
+	  }
 
-	 // _enemyAI[i].Initialize(graphics);
-	 // _enemyAI[i].SetSpawnDelay((i + 1)*(5.0f / _lvl));
-	 // _enemyAI[i].SetIsLive(false);
-	 // }
+	  _objects.push_back(&_enemyAI[i]);
+	  _enemyAI[i].SetSpawnDelay((i + 1)*(5.0f / _lvl));
+	  _enemyAI[i].SetIsLive(false);
+	 }
 
-  _player.Initialize(graphics);
-
+ // _player.Initialize(graphics);
+  _objects.push_back(&_player);
   int offSetY = 0;
   //Creating our grid.
   _worldCubes = (Cube**)malloc(sizeof(Cube*)* _worldSize);
+
   int index = 0;
   //initialize world cubes
   for (int gridX = 0; gridX < _gridHeight; gridX++)
@@ -137,68 +134,70 @@ void Game::InitializeImpl(Graphics *graphics)
 		  printf("x:%f,z:%f\n", worldX, worldZ);
 
 		  _worldCubes[gridX][gridZ].GetTransform().position = Vector3(worldX, worldY, worldZ);
-		  /*The issue was simpler than I thought and had to switch gridz, gridx to gridx,gridz. At first I thought it was
-		  an issue with _pushback but as you can see I rewrote and didn't comment out the parts I rewrote.*/
-		  _worldCubes[gridX][gridZ].Initialize(graphics);
+		  
+		  _objects.push_back(&_worldCubes[gridX][gridZ]);
+
 		  index++;
 	  }
 	  offSetY++;
   }
   _worldSize = index;
-  /*for (size_t i = 0; i < length; i++)
-  {
 
-  }*/
+  for (auto itr = _objects.begin(); itr != _objects.end(); itr++)
+  {
+	  (*itr)->Initialize(_graphicsObject);
+  }
+
 
   Mix_Init(MIX_INIT_MP3);
 
   int success = Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024) == 0;
   if (success){
-	  _fall = Mix_LoadWAV("res/falling.wav");
-	  if (_fall == nullptr)
+	  _fallSound = Mix_LoadWAV("res/falling.wav");
+	  if (_fallSound == nullptr)
 	  {
-		  printf("Failed to load %s", _fall);
+		  printf("Failed to load %s", _fallSound);
 		  exit(0);
 	  }
 
-	  _land = Mix_LoadWAV("res/land.wav");
-	  if (_land == nullptr)
+	  _landSound = Mix_LoadWAV("res/land.wav");
+	  if (_landSound == nullptr)
 	  {
-		  printf("Failed to load %s", _land);
+		  printf("Failed to load %s", _landSound);
 		  exit(0);
 	  }
 
-	  _qbertBeep1 = Mix_LoadWAV("res/fx_17a.wav");
-	  if (_qbertBeep1 == nullptr)
+	  _qbertBeep1Sound = Mix_LoadWAV("res/fx_17a.wav");
+	  if (_qbertBeep1Sound == nullptr)
 	  {
-		  printf("Failed to load %s", _qbertBeep1);
+		  printf("Failed to load %s", _qbertBeep1Sound);
 		  exit(0);
 	  }
 
-	  _qbertBeep2 = Mix_LoadWAV("res/fx_19c.wav");
-	  if (_qbertBeep2 == nullptr)
+	  _qbertBeep2Sound = Mix_LoadWAV("res/fx_19c.wav");
+	  if (_qbertBeep2Sound == nullptr)
 	  {
-		  printf("Failed to load %s", _qbertBeep2);
+		  printf("Failed to load %s", _qbertBeep2Sound);
 		  exit(0);
 	  }
 
-	  _dead = Mix_LoadWAV("res/fx_28.wav");
-	  if (_dead == nullptr)
+	  _deadSound = Mix_LoadWAV("res/fx_28.wav");
+	  if (_deadSound == nullptr)
 	  {
-		  printf("Failed to load %s", _dead);
+		  printf("Failed to load %s", _deadSound);
 		  exit(0);
 	  }
 
-	  _reallyDead = Mix_LoadWAV("res/fx_36.wav");
-	  if (_reallyDead == nullptr)
+	  _reallyDeadSound = Mix_LoadWAV("res/fx_36.wav");
+	  if (_reallyDeadSound == nullptr)
 	  {
-		  printf("Failed to load %s", _reallyDead);
+		  printf("Failed to load %s", _reallyDeadSound);
 		  exit(0);
 	  }
-	  _nextLvl = Mix_LoadWAV("res/never-ending-upward-analog.wav");
-	  if (_nextLvl == nullptr)
+	  _nextLvlSound = Mix_LoadWAV("res/never-ending-upward-analog.wav");
+	  if (_nextLvlSound == nullptr)
 	  {
-		  printf("Failed to load %s", _nextLvl);
+		  printf("Failed to load %s", _nextLvlSound);
 		  exit(0);
 	  }
 
@@ -214,29 +213,30 @@ void Game::UpdateImpl(float dt)
 
 	if (_playerLife == 0)
 	{
-		ResetAndDead();
+		GameOver();
 	}
 
 	bool move = false;
-	_spawnTimerTotal = _spawnTimer - dt;
-	_timer = _timer + dt;
-	_playerScoreTimer /= _timer;
-	if (_spawnTimer == 0)
+
+	//Player to Obstacle Interactions
+	for (int i = 0; i < 3; i++)
 	{
-		/*_enemyAI = new Enemy();
-		_enemyAI->GetTransform().position = Vector3(1,0,1);*/
+		if (_enemyAI[i].GetIsLive())
+		{
+			if (V3Collision(_enemyAI[i].GetTransform().position, _playerPos))
+			{
+				EnemyHitPlayer(&_player);
+				break;
+			}
+		}
 	}
 
-	//Enemy movement
-
-
-//	if (im->GetKeyState(SDL_KEYUP, SDL_KEYUP) == true){
 		if (im->GetKeyState(SDLK_UP, SDL_KEYUP) == true) //up right
 		{// move up grid 1 space towards upper right
 			_playerPos.x = _player.GetTransform().position.x;
 			_playerPos.y = _player.GetTransform().position.y + 1.0f;
 			_playerPos.z = _player.GetTransform().position.z - 1.0f;
-			PlaySound(_qbertBeep1);
+			PlaySound(_qbertBeep1Sound);
 			move = true;
 		}
 		else if (im->GetKeyState(SDLK_DOWN, SDL_KEYUP) == true) // down left
@@ -245,7 +245,7 @@ void Game::UpdateImpl(float dt)
 			_playerPos.x = _player.GetTransform().position.x;
 			_playerPos.y = _player.GetTransform().position.y - 1.0f;
 			_playerPos.z = _player.GetTransform().position.z + 1.0f;
-			PlaySound(_qbertBeep1);
+			PlaySound(_qbertBeep1Sound);
 			move = true;
 		}
 		else if (im->GetKeyState(SDLK_LEFT, SDL_KEYUP) == true) //up left
@@ -254,7 +254,7 @@ void Game::UpdateImpl(float dt)
 			_playerPos.x = _player.GetTransform().position.x - 1.0f;
 			_playerPos.y = _player.GetTransform().position.y + 1.0f;
 			_playerPos.z = _player.GetTransform().position.z;
-			PlaySound(_qbertBeep1);
+			PlaySound(_qbertBeep1Sound);
 			move = true;
 		}
 		else if (im->GetKeyState(SDLK_RIGHT, SDL_KEYUP) == true) // downright
@@ -263,92 +263,66 @@ void Game::UpdateImpl(float dt)
 			_playerPos.x = _player.GetTransform().position.x + 1.0f;
 			_playerPos.y = _player.GetTransform().position.y - 1.0f;
 			_playerPos.z = _player.GetTransform().position.z;
-			PlaySound(_qbertBeep1);
+			PlaySound(_qbertBeep1Sound);
 			move = true;
 		}
-		_player.GetTransform().position = _playerPos;
+	//Enemy
+		
 
+		_player.GetTransform().position = _playerPos;
+		//Check Player gall
 		if (_player.GetTransform().position.x == -1 || _player.GetTransform().position.z == -1 || _player.GetTransform().position.y == _playerFallY)
 		{
 			FallOffWorld(&_player);
 		}
 
-
 		if (move == true){
-
-			printf("Z:%d,X:%d,Y:%d\n", (int)_playerPos.z, (int)_playerPos.x, (int)_playerPos.y);
-			//printf("Index:%d\n", _cubeIndex);
-				if (_playerPos.z >= 0) {
-						//hmmm safeguard for now...
+			//printf("Z:%d,X:%d,Y:%d\n", (int)_playerPos.z, (int)_playerPos.x, (int)_playerPos.y);
 							if (_worldCubes[(int)_playerPos.x][(int)_playerPos.z].GetIsTouched() == false){
 								_playerScore += 10;
-								sprintf_s(_score, "Player Score %d |QBERT GAME Level-%d| Player Life %d", _playerScore, _lvl, _playerLife);
+								sprintf_s(_score, "Player Score %d |QBERT GAME Level_%d| Player Life %d", _playerScore, _lvl, _playerLife);
 								SDL_SetWindowTitle(_window, _score);
 								_worldCubes[(int)_playerPos.x][(int)_playerPos.z].SetIsTouched(true);
-							}
-						
-					}
+							}	
 			move = false;
 		}
 
-		//Tile Check
-		int offSet = 0;
-		int j = 0;
-		for (int gridX = 0; gridX < _gridHeight; gridX++)
-		{
-			for (int gridZ = 0; gridZ < _gridWidth - offSet; gridZ++)
-			{
-				if (_worldCubes[gridX][gridZ].GetIsTouched())
-					{
-						j++;
-						
-					}
-				else
-					{
-						break;
-					}
-				}
-				offSet++;
-		}
-		//std::cout << '\r' << j << std::endl;
-		//printf("Worldsize%d\n", _worldSize);
-		if (j == _worldSize) //need 21
-		{
-			printf("You win level %d\n", _lvl);
+		win = CheckIfAllCubesTouched(win);
+		if (win == true)
 			GoToNextLvl();
-		}
 
+	
 		//Update cube tiles.
-		int offSetY = 0;
-		for (int gridX = 0; gridX < _gridHeight; gridX++)
-		{
-			for (int gridZ = 0; gridZ < _gridWidth - offSetY; gridZ++)
-			{	
-				_worldCubes[gridX][gridZ].Update(dt);
-			}
-			offSetY++;
-		}
+		//int offSetY = 0;
+		//for (int gridX = 0; gridX < _gridHeight; gridX++)
+		//{
+		//	for (int gridZ = 0; gridZ < _gridWidth - offSetY; gridZ++)
+		//	{	
+		//		//_worldCubes[gridX][gridZ].Update(dt);
+		//		_worldCubes[gridX][gridZ].Update(dt);
+		//	}
+		//	offSetY++;
+		//}
 
-		//Update Player
-		_player.Update(dt);
+		////Update Player
+		//_player.Update(dt);
+		for (auto itr = _objects.begin(); itr != _objects.end(); itr++)
+		{
+			(*itr)->Update(dt);
+		}
 }
 
 void Game::DrawImpl(Graphics *graphics, float dt)
 {
-  glPushMatrix();
-  CalculateCameraViewpoint();
+	std::vector<GameObject *> renderOrder = _objects;
+	// CalculateDrawOrder(renderOrder);
+	glPushMatrix();
+	CalculateCameraViewpoint();
 
-  int offSetY = 0;
-  for (int gridX = 0; gridX < _gridHeight; gridX++)
+  for (auto itr = renderOrder.begin(); itr != renderOrder.end(); itr++)
   {
-	  for (int gridZ = 0; gridZ < _gridWidth - offSetY; gridZ++)
-	  {
-		  _worldCubes[gridX][gridZ].Draw(graphics, dt);
-	  }
-	  offSetY++;
+	  (*itr)->Draw(graphics, _camera->GetProjectionMatrix(), dt);
   }
-  _player.Draw(graphics, dt);
-//  _enemyAI->Draw(graphics, dt);
 
   glPopMatrix();
 
@@ -409,41 +383,132 @@ void Game::CalculateCameraViewpoint()
 
 void Game::GoToNextLvl()
 {
-	PlaySound(_nextLvl);
-	_playerScore = _playerScore * _playerScoreTimer;
-	_lvl++;
-	sprintf_s(_score, "Player Score %d |QBERT GAME Level-%d| Player Life %d", _playerScore, _lvl, _playerLife);
-	SDL_SetWindowTitle(_window, _score);
-
+	win = false;
 	_playerPos = Vector3(0, 1, 0);
 
-	if (_spawnTimerTotal < 2.0f){
-		_spawnTimerTotal = 1.0f;
+	printf("You win level %d\n", _lvl);
+
+	PlaySound(_nextLvlSound);
+	_playerScore += 1000; // bonus points
+	_lvl++;
+
+	sprintf_s(_score, "Player Score %d |QBERT GAME Level_%d| Player Life %d", _playerScore, _lvl, _playerLife);
+	SDL_SetWindowTitle(_window, _score);
+
+	int offSet = 0;
+	for (int gridX = 0; gridX < _gridHeight; gridX++)
+	{
+		for (int gridZ = 0; gridZ < _gridWidth - offSet; gridZ++)
+		{
+			_worldCubes[gridX][gridZ].SetIsTouched(false);
+			_worldCubes[gridX][gridZ].Reset();
+		}
+		offSet++;
+	}
+	//Reset enemies and increase difficulty
+	for (int i = 0; i < 3; i++)
+	{
+		_enemyAI[i].Reset();
+		_enemyAI[i].SetSpawnDelay((i + 1)*(5.0f / _lvl));
+	}
+}
+
+void Game::GameOver()
+{
+	PlaySound(_reallyDeadSound);
+	printf("GAME OVER\n! Press enter to continue!\n");
+		getchar();
+
+	_playerPos = Vector3(0, 1, 0);
+	_lvl = 1;
+	_playerLife = 3;
+	_playerScore = 0;
+	sprintf_s(_score, "Player Score %d |QBERT GAME Level_%d| Player Life %d", _playerScore, _lvl, _playerLife);
+	SDL_SetWindowTitle(_window, _score);
+	for (int i = 0; i < 3; i++)
+	{
+		_enemyAI[i].Reset();
+		_enemyAI[i].SetSpawnDelay((i + 1)*(5.0f / _lvl));
+	}
+	int offSet = 0;
+
+	for (int gridX = 0; gridX < _gridHeight; gridX++)
+	{
+		for (int gridZ = 0; gridZ < _gridWidth - offSet; gridZ++)
+		{
+			_worldCubes[gridX][gridZ].SetIsTouched(false);
+			_worldCubes[gridX][gridZ].Reset();
+		}
+		offSet++;
+	}
+}
+void Game::EnemyHitPlayer(Player* player){
+	PlaySound(_deadSound);
+	_playerLife--;
+	sprintf_s(_score, "Player Score %d |QBERT GAME Level_%d| Player Life %d", _playerScore, _lvl, _playerLife);
+	SDL_SetWindowTitle(_window, _score);
+	_playerPos = Vector3(0, 1, 0);
+
+	for (int i = 0; i < 3; i++)
+	{
+		_enemyAI[i].Reset();
+		_enemyAI[i].SetSpawnDelay((i + 1)*(5.0f / _lvl));
+	}
+}
+void Game::FallOffWorld(Player* player){
+	//Fall points
+		PlaySound(_fallSound);
+		_playerPos = Vector3(0, 1, 0);
+		_playerScore = _playerScore;
+		_playerLife--;
+
+		sprintf_s(_score, "Player Score %d |QBERT GAME Level_%d| Player Life %d", _playerScore, _lvl, _playerLife);
+		SDL_SetWindowTitle(_window, _score);
+}
+bool Game::CheckIfAllCubesTouched(bool win)
+{
+	int offSet = 0;
+	int j = 0;
+
+	for (int gridX = 0; gridX < _gridHeight; gridX++)
+	{
+		for (int gridZ = 0; gridZ < _gridWidth - offSet; gridZ++)
+		{
+			if (_worldCubes[gridX][gridZ].GetIsTouched() == true)
+			{
+				j++;
+			}
+			else
+			{
+				break;
+			}
+		}
+		offSet++;
+	}
+	if (j == _worldSize)
+		win = true;
+	else
+		win = false;
+
+	return win;
+}
+
+bool Game::V3Collision(Vector3 object1, Vector3 object2)
+{
+	if
+		(
+		object1.x == object2.x &&
+		object1.y == object2.y &&
+		object1.z == object2.z
+		)
+	{
+		return true;
 	}
 	else
 	{
-		_spawnTimerTotal = _spawnTimer - 1.0f;
+		return false;
 	}
-}
-void Game::ResetAndDead()
-{
-	printf("GAME OVER\n! Press Spacebar to continue!\n");
-		getchar();
-	_playerPos = Vector3(0, 1, 0);
-	_playerLife = 3;
-	_playerScore = 0;
-	_spawnTimer = 10.0f;
-}
 
-void Game::FallOffWorld(Player* player){
-	//Fall points
-		PlaySound(_fall);
-		_playerPos = Vector3(0, 1, 0);
-		_playerScore = _playerScore;
-		_playerLife = _playerLife - 1;
-
-		sprintf_s(_score, "Player Score %d |QBERT GAME| Player Life %d", _playerScore, _playerLife);
-		SDL_SetWindowTitle(_window, _score);
 }
 
 void Game::PlaySound(Mix_Chunk *sound){

@@ -1,3 +1,9 @@
+/**
+* \class Game.h
+* \brief A class that represents the main game interactions between QBert, the world and enemies.
+* \author David Stoddard
+* \date March 26, 2015
+*/
 #pragma once
 
 #include <GameEngine.h>
@@ -19,14 +25,22 @@ public:
 
 protected:
   Game();
-
-  void InitializeImpl(Graphics *graphics);
+  /**
+  * \fn void Game::InitializeImpl()
+  * \brief Initialize main game environment and players is drawn to the screen.
+  * \param renderer The SDL renderer used to draw the object.
+  */
+  void InitializeImpl();
   void UpdateImpl(float dt);
   void DrawImpl(Graphics *graphics, float dt);
+
   void GoToNextLvl();
-  void ResetAndDead();
+  void GameOver();
+  void EnemyHitPlayer(Player* player);
   void FallOffWorld(Player* player);
   void PlaySound(Mix_Chunk *sound);
+  bool CheckIfAllCubesTouched(bool win);
+  bool V3Collision(Vector3 object1, Vector3 object2);
   void CalculateDrawOrder(std::vector<GameObject *>& drawOrder);
   void CalculateCameraViewpoint();
 
@@ -36,20 +50,24 @@ protected:
   unsigned int _worldSize;
   unsigned int _lvl;
 
-	 unsigned int _playerScore;
-	 unsigned int _playerScoreTimer;
-	 unsigned int _playerLife;
+	unsigned int _playerScore;
+	unsigned int _playerScoreTimer;
+	unsigned int _playerLife;
   float _playerFallY;
   Vector3 _playerPos;
 
-  int enemyNumbers;
-  Enemy *_enemyAI;
- // Enemy *_enemyAI;
-  unsigned int _timer;
-  float _spawnTimer;
-  float _spawnTimerTotal;
+  bool win;
+  bool untouch;
 
-  Cube** _worldCubes;
+  // Enemy
+ int enemyNumbers;
+ Enemy _enemyAI[3];
+ int _totalEnemies;
+ unsigned int _timer;
+ float _spawnTimer;
+ float _spawnTimerTotal;
+
+ Cube** _worldCubes;
 
  char _score[200];
 
@@ -57,11 +75,11 @@ protected:
  int _gridHeight;
 
  //The sound effects that will be used
- Mix_Chunk *_fall;
- Mix_Chunk *_land;
- Mix_Chunk *_qbertBeep1;
- Mix_Chunk *_qbertBeep2;
- Mix_Chunk *_dead;
- Mix_Chunk *_reallyDead;
- Mix_Chunk *_nextLvl;
+ Mix_Chunk *_fallSound;
+ Mix_Chunk *_landSound;
+ Mix_Chunk *_qbertBeep1Sound;
+ Mix_Chunk *_qbertBeep2Sound;
+ Mix_Chunk *_deadSound;
+ Mix_Chunk *_reallyDeadSound;
+ Mix_Chunk *_nextLvlSound;
 };

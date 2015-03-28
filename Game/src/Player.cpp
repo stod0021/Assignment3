@@ -102,7 +102,7 @@ void Player::Update(float dt)
 {
 }
 
-void Player::Draw(Graphics *graphics, float dt)
+void Player::Draw(Graphics *graphics,Matrix4x4 relativeTo, float dt)
 {
 	GLenum error = glGetError();
 
@@ -143,14 +143,3 @@ void Player::SetVertex(int index, float x, float y, float z, float r, float g, f
 	colours[index].z = b;
 	colours[index].w = a;
 }
-
-//
-//void Player::SetPosition(Vector3 pos)
-//{
-//	_transform.position = pos;
-//}
-//
-//Vector3 Player::GetPosition()
-//{
-//	return this->_transform.position;
-//}
